@@ -25,7 +25,7 @@ public class Player extends gunslinger.sim.Player
 	//
 	public String name()
 	{
-		return "dumb0" + (versions > 1 ? " v" + version : "");
+		return "dumb3" + (versions > 1 ? " v" + version : "");
 	}
 
 	// Initialize the player
