@@ -13,6 +13,9 @@ public class Player extends gunslinger.sim.Player
 	// track the history of all the rounds
 	private int[][] history;
 
+	// Current Neutral-turned enemies
+	ArrayList<Integer> current_alive_turned_enemies = new ArrayList<Integer>();
+
 	// total versions of the same player
 	private static int versions = 0;
 	// my version no
@@ -75,21 +78,32 @@ public class Player extends gunslinger.sim.Player
 		round++;            
 		int alive_friends = 0;
 		int alive_players = 0;
+		ArrayList<Integer> current_alive_friends = new ArrayList<Integer>();
+
+		// Shoot or not in this round?
+		for (int i=0 ; i<nplayers ; i++)
+		{
+			if (alive[i])
+			{
+				alive_players++;
+				for (int j=0 ; j<friends.length ; j++)
+				{
+					if (friends[j] == i)
+					{
+						current_alive_friends.add(i);
+						alive_friends++;
+					}
+				}
+
+				for (int j=0 ; j<enemies.length ; j++)
+				{
+
+				}
+			}
+		}
 
 		if (round == 1)
 		{
-			// Shoot or not in this round?
-			for (int i=0 ; i<nplayers ; i++){
-				if (alive[i]){
-					alive_players++;
-					for (int j=0 ; j<friends.length ; j++){
-						if (friends[j] == i){
-							alive_friends++;
-						}
-					}
-				}
-			}
-
 			double initial_prob = 1.0 - ((1.0*alive_friends)/(alive_players - 1));
 			System.out.println("Initial Prob. of DUMB5: " + initial_prob + "\n");
 
@@ -126,7 +140,7 @@ public class Player extends gunslinger.sim.Player
 			{
 				for (int j = 0; j < nplayers; j++)
 				{
-					System.out.println("History: " + history[i][j] + " ");
+					System.out.print(history[i][j] + " ");
 				}
 				System.out.println();
 			}
@@ -142,6 +156,10 @@ public class Player extends gunslinger.sim.Player
 						{
 							target = i;
 							System.out.println("New Target: " + i);
+
+							// Add current hitter to my enemy list
+							current_alive_turned_enemies.add(i);
+							
 							return target;
 						}
 					}
@@ -149,30 +167,48 @@ public class Player extends gunslinger.sim.Player
 			}
 		}
 
-		ArrayList<Integer> targets = new ArrayList<Integer>();
+		// Populate alive enemies
+		// keep track of current alive enemies
+		ArrayList<Integer> current_alive_enemies = new ArrayList<Integer>();
+		HashMap<Integer, Integer> current_alive_enemy_score = new HashMap<Integer, Integer>();
+		// Iterate through all players to find other alive players
 		for (int i = 0; i != nplayers; ++i)
 		{
+			// If alive
 			if (i != id && alive[i] )
 			{
+				// Find enemies
 				for (int j=0 ; j<enemies.length ; j++)
 				{
+					// If current player is an enemy
 					if (enemies[j] == i)
 					{
-						targets.add(i);
+						// If current enemy has hit a friend before, add its score
+						for (int k=0 ; k<current_alive_friends.size() ; k++)
+						{
+							if (history[i][current_alive_friends.get(k)] > 0)
+							{
+								int score = history[i][current_alive_friends.get(k)] + current_alive_enemy_score.get(i);
+								current_alive_enemy_score.put(i,score);
+
+								System.out.println("Added " + i + "to enemy list since it shot " + current_alive_friends.get(k));
+								current_alive_enemies.add(i);
+							}
+						}
 					}
 				}
 			}
 		}
-		
-		//int target = targets.get(gen.nextInt(targets.size()));
-		if (targets.size() > 0)
+
+		// Pick first target and shoot
+		//int target = current_alive_enemies.get(gen.nextInt(current_alive_enemies.size()));
+		if (current_alive_enemies.size() > 0)
 		{
-			int target = targets.get(0);
+			int target = current_alive_enemies.get(0);
 			return target;
 		}
 		return -1;
 	}
-
 
 	private Random gen;
 	private int nplayers;
